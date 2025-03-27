@@ -1,46 +1,37 @@
-# ⚙️ MKT3434_2025
+# MKT3434_2025 Project Enhancements
+Author: Yusuf Tugrul Demir 
+Student ID: 2106A026 
 
-**MKT3434 Course of Dept. Mechatronics Eng. at YTU instructed by Ertugrul Bayraktar**
+## Overview
+This repository contains my enhanced version of the original Python/PyQt GUI created for the MKT3434_2025 course. I have extended the application to include several additional features that make it more flexible and useful for machine learning tasks, especially for handling missing data and tuning different model parameters.
 
----
+## New Features and Improvements
 
-## 🚀 Overview
+1) Missing Data Handling
+   There is now a “Missing Data” dropdown in the “Data Management” section with these options: 
+   - No Handling 
+   - Mean Imputation 
+   - Interpolation 
+   - Forward Fill 
+   - Backward Fill 
 
-This repository provides a base GUI framework for students to develop and integrate machine learning methods. The GUI is built using PyQt6 and supports various classical machine learning and deep learning techniques. Students will extend this GUI by adding necessary functionalities over time.
+   The selected method is automatically applied before the train/test split is done, allowing cleaner data preparation.
 
----
+2) SGD Regression and Classification
+   Under “Classical ML,” I added “SGD Regression” and “SGD Classification” sections. For regression, you can choose MSE, MAE, or Huber loss. For classification, you can pick Cross-Entropy (log_loss) or Hinge. Both are powered by scikit-learn’s SGDRegressor and SGDClassifier.
 
-## 📚 Long-Term Homework Instructions
+3) Support Vector Regression (SVR)
+   The “Regression” area now has “Support Vector Regression.” You can configure parameters such as C, kernel (linear, rbf, poly), degree, and epsilon.
 
-Students are required to modify and enhance this GUI incrementally every three weeks. The objective is to build a fully functional and improved machine learning GUI.
+4) **GaussianNB with Custom Priors
+   In the “GaussianNB” section, I added `var_smoothing` and a line edit for custom `priors`. You can type something like “0.3,0.7” to define your own prior probabilities if you have two classes.
 
-### 🎯 Key Requirements:
+5) Confusion Matrix Visualization
+   When you train a classification model, the GUI shows a confusion matrix and a PCA-based 2D scatter plot (if your feature dimension is greater than 2) in the Visualization panel. This helps analyze model performance in more detail.
 
-*   **Insert Necessary Methods:** Integrate missing machine learning methods within the provided GUI framework.
-*   **Enhance the GUI:** The default interface is provided, but students are encouraged to improve usability and design.
-*   **Ensure Data and Method Appropriateness:** The datasets and algorithms should be compatible within the GUI structure.
-*   **Implement Training and Testing Processes:** Correctly implement model training and evaluation workflows.
-*   **Regular Submissions:** Submit updates every three weeks through Google Classroom for this course.
+6) Boston Housing with SVR
+   If you choose the “Boston Housing Dataset” and then train with “Support Vector Regression,” you can see regression metrics such as MSE, RMSE, and R² in the Visualization panel, along with a scatter plot of actual vs. predicted values.
 
----
+7) Deep Learning (MLP)
+   The “Deep Learning” tab allows adding multiple layers (Dense, Dropout, etc.) and training a neural network. The training history, including accuracy or loss curves, appears in the Visualization area.
 
-## 🤝 Repository and Collaboration
-
-Students should fork this repository and develop their versions.
-
-Regular commits and documentation updates are expected.
-
----
-
-## 🏁 Getting Started
-
-### ⚙️ Prerequisites:
-
-Ensure you have the following installed:
-
-*   Python 3.8+
-
-### 📦 Required dependencies:
-
-```bash
-pip install numpy pandas matplotlib PyQt6 scikit-learn tensorflow torch torchvision torchaudio opencv-python opencv-contrib-python scipy fastai kornia
