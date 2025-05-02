@@ -22,12 +22,20 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.metrics import (accuracy_score, mean_squared_error, confusion_matrix,r2_score)
+from sklearn.metrics import (accuracy_score, mean_squared_error, confusion_matrix, r2_score, silhouette_score)
 from sklearn.impute import SimpleImputer
 
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers, models, optimizers
+
+from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
+from sklearn.manifold import TSNE
+import umap
+from sklearn.model_selection import KFold
+from sklearn.metrics import accuracy_score
+from sklearn.cluster import KMeans
 
 class MLCourseGUI(QMainWindow):
     def __init__(self):
@@ -297,7 +305,8 @@ class MLCourseGUI(QMainWindow):
             ("Classical ML", self.create_classical_ml_tab),
             ("Deep Learning", self.create_deep_learning_tab),
             ("Dimensionality Reduction", self.create_dim_reduction_tab),
-            ("Reinforcement Learning", self.create_rl_tab)
+            ("Reinforcement Learning", self.create_rl_tab),
+        ("DimRed & CV", self.create_dimred_cv_tab)
         ]
         
         for tab_name, create_func in tabs:
@@ -1222,6 +1231,127 @@ class MLCourseGUI(QMainWindow):
     # Error handling
     def show_error(self, message):
         QMessageBox.critical(self, "Error", message)
+        
+        
+    
+    def create_dimred_cv_tab(self):
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        for text, slot in [
+            ("Run PCA", self.run_pca),
+            ("Run LDA", self.run_lda),
+            ("KMeans Elbow", self.run_kmeans_elbow),
+            ("Run t-SNE", self.run_tsne),
+            ("Run UMAP", self.run_umap),
+            ("Run K-Fold CV", self.run_kfold_cv),
+            ("Silhouette Score", self.run_silhouette_score)
+        ]:
+            btn = QPushButton(text)
+            btn.clicked.connect(slot)
+            layout.addWidget(btn)
+
+        return widget
+
+    def run_pca(self):
+        if self.X_train is None:
+            self.show_error("Load data first")
+            return
+        pca = PCA()
+        pca.fit(self.X_train)
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+        ax.plot(np.cumsum(pca.explained_variance_ratio_))
+        ax.set_title("PCA Explained Variance")
+        self.canvas.draw()
+
+    def run_lda(self):
+        if self.X_train is None or self.y_train is None:
+            self.show_error("Load data first")
+            return
+        lda = LDA(n_components=2)
+        X_lda = lda.fit_transform(self.X_train, self.y_train)
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+        ax.scatter(X_lda[:, 0], X_lda[:, 1], c=self.y_train, cmap='tab10')
+        ax.set_title("LDA Projection")
+        self.canvas.draw()
+
+    def run_kmeans_elbow(self):
+        self.figure.clear()
+        distortions = []
+        K = range(1, 10)
+        for k in K:
+            kmeans = KMeans(n_clusters=k, random_state=42)
+            kmeans.fit(self.X_train)
+            distortions.append(kmeans.inertia_)
+        ax = self.figure.add_subplot(111)
+        ax.plot(K, distortions, 'bx-')
+        ax.set_title("KMeans Elbow Method")
+        ax.set_xlabel("k")
+        ax.set_ylabel("Distortion")
+        self.canvas.draw()
+
+    def run_tsne(self):
+        tsne = TSNE(n_components=2, perplexity=30, random_state=42)
+        X_tsne = tsne.fit_transform(self.X_train)
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+        ax.scatter(X_tsne[:, 0], X_tsne[:, 1], c=self.y_train, cmap='tab10')
+        ax.set_title("t-SNE Projection")
+        self.canvas.draw()
+
+    def run_umap(self):
+        reducer = umap.UMAP(n_components=2, random_state=42)
+        X_umap = reducer.fit_transform(self.X_train)
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+        ax.scatter(X_umap[:, 0], X_umap[:, 1], c=self.y_train, cmap='tab10')
+        ax.set_title("UMAP Projection")
+        self.canvas.draw()
+
+    def run_kfold_cv(self):
+        if self.X_train is None or self.y_train is None:
+            self.show_error("Load data first")
+            return
+        k = 5
+        kf = KFold(n_splits=k, shuffle=True, random_state=42)
+        scores = []
+        for train_idx, test_idx in kf.split(self.X_train):
+            X_tr, X_val = self.X_train[train_idx], self.X_train[test_idx]
+            y_tr, y_val = self.y_train[train_idx], self.y_train[test_idx]
+            model = LogisticRegression(max_iter=1000)
+            model.fit(X_tr, y_tr)
+            y_pred = model.predict(X_val)
+            acc = accuracy_score(y_val, y_pred)
+            scores.append(acc)
+        mean_acc = np.mean(scores)
+        std_acc = np.std(scores)
+        self.metrics_text.setText(f"K={k} Fold Accuracy\nMean: {mean_acc:.4f}\nStd: {std_acc:.4f}")
+
+
+    def run_silhouette_score(self):
+        if self.X_train is None:
+            self.show_error("Load data first")
+            return
+        try:
+            self.figure.clear()
+            ax = self.figure.add_subplot(111)
+            k_range = range(2, 11)
+            scores = []
+            for k in k_range:
+                kmeans = KMeans(n_clusters=k, random_state=42)
+                labels = kmeans.fit_predict(self.X_train)
+                score = silhouette_score(self.X_train, labels)
+                scores.append(score)
+            ax.plot(list(k_range), scores, marker='o')
+            ax.set_title("Silhouette Score vs K")
+            ax.set_xlabel("K")
+            ax.set_ylabel("Silhouette Score")
+            self.canvas.draw()
+            self.status_bar.showMessage("Silhouette Score calculated.")
+        except Exception as e:
+            self.show_error(f"Silhouette score error: {str(e)}")
 
 def main():
     """Main function to start the application"""
@@ -1232,3 +1362,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
+    
